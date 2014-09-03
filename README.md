@@ -34,7 +34,7 @@ The primary source class containing the core functionality of the SDK is *glsdk_
 Initialize the SDK and establish a connection
 ---------------------------------------------
 
-In order to begin using the SDK, you must first create the SDK object and establish a connection. It is recommended to use the sample API, *glsdk.as*, as a starting point. In this sample, we subclassed *glsdk_core.as* and treated it as a singleton which allows for ease of access throughout the project. Finally, to connect to the server, simply call *sdk.connect( gameId, deviceId, serverURI )* and pass in the appropriate information:
+In order to begin using the SDK, you must first create the SDK object and establish a connection. It is recommended to use the sample API, *glsdk.as*, as a starting point. In this sample, we subclassed *glsdk_core.as* and treated it as a singleton which allows for ease of access throughout the project. Finally, to connect to the server, simply call *SDK.connect( gameId, deviceId, serverURI )* and pass in the appropriate information:
 - gameId: in order for the server to accept telemetry, a valid game Id must be provided. Game Ids are provided to developers when they register for GlassLab Game Services.
 - deviceId: leave this field marked as "test_device".
 - serverURI: this is the server the game will make requests to.
@@ -127,9 +127,9 @@ Achievements
 ------------
 
 Achievements are one piece of the reporting on GlassLab Game Services. This information will come from the game and all logic governing achievements must be defined there, but the SDK can be used to send recorded achievements to the server. They go through the same pipeline as telemetry and can be triggered with the "saveAchievement" function. The SDK requires three unique parameters for each achievement:
-- item
-- group
-- subGroup
+- item (the name of the achievement)
+- group (the primary standard this achievement is associated with)
+- subgroup (the standard sub-type)
 
 The developer is responsible for defining the achievements and must register them through the developer portal with their game. Successful registration will return the appropriate item, group, and subGroup values that can be used in-game and that the server will accept as valid.
 
