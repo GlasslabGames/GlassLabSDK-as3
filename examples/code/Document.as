@@ -18,7 +18,7 @@ package {
 	public class Document extends MovieClip {
 		
 		// Server/client constants
-		public static const SERVER_URI 	: String = "http://192.168.6.171:8001";//developer.playfully.org";
+		public static const SERVER_URI 	: String = "http://developer.playfully.org";
 		public static const GAME_LEVEL 	: String = "Demonstration";
 		public static const GAME_ID		: String = "TEST";
 		
