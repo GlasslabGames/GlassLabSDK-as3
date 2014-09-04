@@ -62,8 +62,8 @@ Sample API
 A sample API is provided in the examples folder.
 
 To use this sample, focus the canvas and use the following keys:
-- start a ession with S
-- end the ession with E
+- start a session with S
+- end the session with E
 - send telemetry with T
 
 Success and failure from the server is determined by order of calls received. Keep the following in mind:
