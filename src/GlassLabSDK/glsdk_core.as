@@ -139,7 +139,7 @@ package GlassLabSDK {
 		* @param message The message type as denoted in glsdk_const.
 		* @param data The returned data in JSON format.
 		*/
-		private function pushMessageQueue( message:int, data:String = "" ) : void {
+		private function pushMessageQueue( message:int, data:Object ) : void {
 			var response:glsdk_response = new glsdk_response( message, data );
 			m_messageQueue.push( response );
 		}
@@ -786,7 +786,7 @@ package GlassLabSDK {
 				bytes.inflate();
 				
 				// Read the save game object
-				event.target.data = glsdk_json.instance().stringify( bytes.readObject() );
+				event.target.data = bytes;
 			}
 			
 			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, event.target.data );

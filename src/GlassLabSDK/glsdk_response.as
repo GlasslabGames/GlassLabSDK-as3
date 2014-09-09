@@ -15,7 +15,7 @@ package GlassLabSDK {
 	public class glsdk_response {
 
 		public var m_message : int;	// The message type referenced from glsdk_const.
-		public var m_data : String;	// The actual response data in JSON form.
+		public var m_data : Object;	// The actual response data in JSON form.
 		
 		
 		/**
@@ -24,7 +24,7 @@ package GlassLabSDK {
 		* param message An int referring to one of the message response constant.
 		* param data The response data in JSON form.
 		*/
-		public function glsdk_response( message:int, data:String ) {
+		public function glsdk_response( message:int, data:Object ) {
 			m_message = message;
 			m_data = data;
 		}
