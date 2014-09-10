@@ -151,3 +151,8 @@ You can also record and access game saves per user with two simple functions:
 - postSaveGame( object:Object )
 
 Note that you must be authenticated with the server in order to get and send save games. The AS3 SDK allows you to save games in generic Object format or binary format. To save games in binary format, use the "postSaveGameBinary( bytes:ByteArray )" function and pass in a ByteArray as the parameter. The SDK will convert this to hex format and send it to the server.
+
+
+### License
+
+The GlassLab SDK is under the BSD license: [SDK license](https://github.com/GlasslabGames/GlassLabSDK-as3/blob/master/LICENSE "SDK license")
