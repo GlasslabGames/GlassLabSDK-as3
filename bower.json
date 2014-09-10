@@ -1,0 +1,13 @@
+{
+    "name": "glasslab-sdk-as3",
+    "version": "0.5.0",
+    "main": "lib/glasslab-sdk.js",
+    "ignore": [
+        "node_modules",
+        ".*"
+    ],
+    "dependencies": {
+    },
+    "devDependencies": {
+    }
+}
