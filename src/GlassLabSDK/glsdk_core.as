@@ -318,7 +318,7 @@ package GlassLabSDK {
 		*/
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
 			if( !isLocal() ) {
-				Security.allowDomain( "*" );
+				//Security.allowDomain( "*" );
 				if( ExternalInterface.available ) {
 					ExternalInterface.addCallback( "success", eiSuccessCallback );
 					ExternalInterface.addCallback( "failure", eiFailureCallback );
