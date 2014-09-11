@@ -1035,7 +1035,7 @@ package GlassLabSDK {
 			var event:Object = {};
 			event.target = { data: response };
 			
-			this[ key + "_Done" ]( event );
+			this[ key + "_Fail" ]( event );
 		}
 		
 		/**
