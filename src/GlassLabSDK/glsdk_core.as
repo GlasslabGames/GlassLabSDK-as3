@@ -113,13 +113,7 @@ package GlassLabSDK {
 		public function glsdk_core() {
 			// Setup the ExternalInterface callback functions. These callback functions will redirect
 			// to the appropriate internal callback function using the attached "api" variable.
-			if( !isLocal() ) {
-				Security.allowDomain( "*" );
-				if( ExternalInterface.available ) {
-					ExternalInterface.addCallback( "success", eiSuccessCallback );
-					ExternalInterface.addCallback( "failure", eiFailureCallback );
-				}
-			}
+			
 			
 			// Default id variables
 			m_serverUri = "";
@@ -323,6 +317,14 @@ package GlassLabSDK {
 		* @see httpRequest
 		*/
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
+			if( !isLocal() ) {
+				Security.allowDomain( "*" );
+				if( ExternalInterface.available ) {
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+				}
+			}
+			
 			// Set the Id variables and URI
 			m_clientId = clientId;
 			m_deviceId = deviceId;
