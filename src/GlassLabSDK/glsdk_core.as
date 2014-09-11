@@ -105,6 +105,9 @@ package GlassLabSDK {
 		private var m_dispatchCount : int;				// Local counter for dispatching telemetry
 		private var m_dispatching : Boolean;			// Indicates if the SDK is in the middle of dispatching events
 		
+		
+		private var m_callbacksAdded : Boolean = false;
+		
 
 		/**
 		* Default constructor initializes client properties and prepares an "empty" machine
@@ -113,7 +116,7 @@ package GlassLabSDK {
 		public function glsdk_core() {
 			// Setup the ExternalInterface callback functions. These callback functions will redirect
 			// to the appropriate internal callback function using the attached "api" variable.
-			
+			m_callbacksAdded = false;
 			
 			// Default id variables
 			m_serverUri = "";
@@ -319,9 +322,10 @@ package GlassLabSDK {
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
 			if( !isLocal() ) {
 				//Security.allowDomain( "*" );
-				if( ExternalInterface.available ) {
+				if( !m_callbacksAdded && ExternalInterface.available ) {
 					ExternalInterface.addCallback( "success", eiSuccessCallback );
 					ExternalInterface.addCallback( "failure", eiFailureCallback );
+					m_callbacksAdded = true;
 				}
 			}
 			
@@ -960,6 +964,12 @@ package GlassLabSDK {
 			// Check for the existence of an external interface
 			// If it does exist, perform requests on the javascript layer
 			if( !isLocal() && ExternalInterface.available ) {
+				if( !m_callbacksAdded ) {
+					m_callbacksAdded = true;
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+				}
+				
 				// Create the request object as a blob
 				var req : Object = new Object();
 				req.key = dispatch.m_path.KEY
