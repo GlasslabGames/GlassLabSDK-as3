@@ -105,21 +105,20 @@ package GlassLabSDK {
 		private var m_dispatchCount : int;				// Local counter for dispatching telemetry
 		private var m_dispatching : Boolean;			// Indicates if the SDK is in the middle of dispatching events
 		
+		
+		private var m_callbacksAdded : Boolean = false;
+		
 
 		/**
 		* Default constructor initializes client properties and prepares an "empty" machine
 		* ready to communicate to the server.
 		*/
 		public function glsdk_core() {
+				flash.system.Security.allowDomain( "*" );
+			
 			// Setup the ExternalInterface callback functions. These callback functions will redirect
 			// to the appropriate internal callback function using the attached "api" variable.
-			if( !isLocal() ) {
-				Security.allowDomain( "*" );
-				if( ExternalInterface.available ) {
-					ExternalInterface.addCallback( "success", eiSuccessCallback );
-					ExternalInterface.addCallback( "failure", eiFailureCallback );
-				}
-			}
+			m_callbacksAdded = false;
 			
 			// Default id variables
 			m_serverUri = "";
@@ -160,6 +159,37 @@ package GlassLabSDK {
 			
 			// Initialize the message queue
 			m_messageQueue = new Array();
+		}
+		
+		
+		/**
+		* Generic success callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiSuccessCallback( key:String, response:String ) : void {
+			//writeText( "in success (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Done" ]( event );
+		}
+		
+		/**
+		* Generic failure callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiFailureCallback( key:String, response:String ) : void {
+			//writeText( "in failure (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Fail" ]( event );
 		}
 		
 		
@@ -323,6 +353,15 @@ package GlassLabSDK {
 		* @see httpRequest
 		*/
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
+			if( !isLocal() ) {
+				//Security.allowDomain( "*" );
+				if( !m_callbacksAdded && ExternalInterface.available ) {
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+					m_callbacksAdded = true;
+				}
+			}
+			
 			// Set the Id variables and URI
 			m_clientId = clientId;
 			m_deviceId = deviceId;
@@ -958,6 +997,12 @@ package GlassLabSDK {
 			// Check for the existence of an external interface
 			// If it does exist, perform requests on the javascript layer
 			if( !isLocal() && ExternalInterface.available ) {
+				if( !m_callbacksAdded ) {
+					m_callbacksAdded = true;
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+				}
+				
 				// Create the request object as a blob
 				var req : Object = new Object();
 				req.key = dispatch.m_path.KEY
@@ -1008,35 +1053,7 @@ package GlassLabSDK {
 			}
 		}
 		
-		/**
-		* Generic success callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiSuccessCallback( key:String, response:String ) : void {
-			//writeText( "in success (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Done" ]( event );
-		}
 		
-		/**
-		* Generic failure callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiFailureCallback( key:String, response:String ) : void {
-			//writeText( "in failure (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Done" ]( event );
-		}
 		
 		/**
 		* Failure callback function for any security error and invalid request. Adds an ERROR
