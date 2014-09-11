@@ -114,6 +114,8 @@ package GlassLabSDK {
 		* ready to communicate to the server.
 		*/
 		public function glsdk_core() {
+				flash.system.Security.allowDomain( "*" );
+			
 			// Setup the ExternalInterface callback functions. These callback functions will redirect
 			// to the appropriate internal callback function using the attached "api" variable.
 			m_callbacksAdded = false;
