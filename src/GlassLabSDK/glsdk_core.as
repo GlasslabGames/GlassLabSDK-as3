@@ -161,6 +161,37 @@ package GlassLabSDK {
 		
 		
 		/**
+		* Generic success callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiSuccessCallback( key:String, response:String ) : void {
+			//writeText( "in success (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Done" ]( event );
+		}
+		
+		/**
+		* Generic failure callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiFailureCallback( key:String, response:String ) : void {
+			//writeText( "in failure (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Fail" ]( event );
+		}
+		
+		
+		/**
 		* Function adds a new server response object to the message queue, which is
 		* composed of the message type and JSON data. This function is called on
 		* every server callback, success and failure included.
@@ -1020,35 +1051,7 @@ package GlassLabSDK {
 			}
 		}
 		
-		/**
-		* Generic success callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiSuccessCallback( key:String, response:String ) : void {
-			//writeText( "in success (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Done" ]( event );
-		}
 		
-		/**
-		* Generic failure callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiFailureCallback( key:String, response:String ) : void {
-			//writeText( "in failure (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Fail" ]( event );
-		}
 		
 		/**
 		* Failure callback function for any security error and invalid request. Adds an ERROR
