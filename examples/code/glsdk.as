@@ -18,8 +18,6 @@ package {
 	import flash.utils.Timer;
 	import flash.utils.ByteArray;
 	
-	import flash.external.ExternalInterface;
-	
 	
 	public class glsdk extends glsdk_core {
 		
