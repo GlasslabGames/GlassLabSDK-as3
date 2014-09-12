@@ -18,6 +18,8 @@ package {
 	import flash.utils.Timer;
 	import flash.utils.ByteArray;
 	
+	import flash.external.ExternalInterface;
+	
 	
 	public class glsdk extends glsdk_core {
 		
@@ -250,6 +252,8 @@ package {
 		public override function writeText( text:String ) : void {
 			// DEBUG - append to canvas stream
 			m_document.updateText( text );
+			
+			super.writeText( text );
 		}
 	}
 }

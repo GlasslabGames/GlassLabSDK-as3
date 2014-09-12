@@ -169,7 +169,7 @@ package GlassLabSDK {
 		* @param response The server response JSON blob.
 		*/
 		private function eiSuccessCallback( key:String, response:String ) : void {
-			//writeText( "in success (" + key + ") callback: " + response );
+			writeText( "in success (" + key + ") callback: " + response );
 			
 			var event:Object = {};
 			event.target = { data: response };
@@ -184,7 +184,7 @@ package GlassLabSDK {
 		* @param response The server response JSON blob.
 		*/
 		private function eiFailureCallback( key:String, response:String ) : void {
-			//writeText( "in failure (" + key + ") callback: " + response );
+			writeText( "in failure (" + key + ") callback: " + response );
 			
 			var event:Object = {};
 			event.target = { data: response };
@@ -353,12 +353,16 @@ package GlassLabSDK {
 		* @see httpRequest
 		*/
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
+			writeText( "in connect()" );
 			if( !isLocal() ) {
+				writeText( "game is not local" );
 				//Security.allowDomain( "*" );
 				if( !m_callbacksAdded && ExternalInterface.available ) {
+					writeText( "before add callback" );
 					ExternalInterface.addCallback( "success", eiSuccessCallback );
 					ExternalInterface.addCallback( "failure", eiFailureCallback );
 					m_callbacksAdded = true;
+					writeText( "after add callback" );
 				}
 			}
 			
@@ -997,10 +1001,13 @@ package GlassLabSDK {
 			// Check for the existence of an external interface
 			// If it does exist, perform requests on the javascript layer
 			if( !isLocal() && ExternalInterface.available ) {
+				writeText( "in httpRequest, not local, EI available" );
 				if( !m_callbacksAdded ) {
+					writeText( "callbacks not yet added" );
 					m_callbacksAdded = true;
 					ExternalInterface.addCallback( "success", eiSuccessCallback );
 					ExternalInterface.addCallback( "failure", eiFailureCallback );
+					writeText( "callbacks not yet added after" );
 				}
 				
 				// Create the request object as a blob
@@ -1301,6 +1308,10 @@ package GlassLabSDK {
 		/*
 		 * DEBUG text writing.
 		 */
-		public function writeText( text:String ) : void {}
+		public function writeText( text:String ) : void {
+			if( ExternalInterface.available ) {
+				ExternalInterface.call( "console.log", text );
+			}
+		}
 	}
 }
