@@ -371,6 +371,43 @@ package GlassLabSDK {
 			// Perform the request
 			httpRequest( new glsdk_dispatch( glsdk_const.API_CONNECT, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, connect_Done, connect_Fail ) );
 		}
+		/**
+		* Helper function for connecting directly with the server using the URL of the container host.
+		* This particular request will not be inserted into the queue. Instead, it is called immediately.
+		* This server call will return the server we should reroute requests to, if one is specified.
+		*
+		* If this request is successful, MESSAGE_CONNECT will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param clientId The product or game's client Id.
+		* @param deviceId The unique Id of the device.
+		* @param serverUri The Uri of the server to connect to.
+		*
+		* @see httpRequest
+		*/
+		public function connectWithContainerHost( clientId:String, deviceId:String, serverUri:String ) : void {
+			// Set the Id variables and URI
+			m_clientId = clientId;
+			m_deviceId = deviceId;
+			
+			// Check for the existence of an external interface
+			// If it does exist, get the server protocol and host
+			if( !isLocal() && ExternalInterface.available ) {
+				// Call the SDK service on angular
+				var protocol : String = ExternalInterface.call( "window.location.protocol" );
+				var host : String = ExternalInterface.call( "window.location.host" );
+				
+				// Set the server URI
+				m_serverUri = protocol + "//" + host;
+			}
+			// If the external interface doesn't exist, use a default URL
+			else {
+				m_serverUri = serverUri;
+			}
+			
+			// Perform the request
+			httpRequest( new glsdk_dispatch( glsdk_const.API_CONNECT, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, connect_Done, connect_Fail ) );
+		}
 		
 		
 		/**

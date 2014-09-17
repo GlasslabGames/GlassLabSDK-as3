@@ -34,7 +34,7 @@ package {
 			
 			// Set the client level and connect to a server
 			glsdk.instance().clientLevel = GAME_LEVEL;
-			glsdk.instance().connect( GAME_ID, "test_device", SERVER_URI );
+			glsdk.instance().connectWithContainerHost( GAME_ID, "test_device", SERVER_URI );
 		}
 		
 		/**
