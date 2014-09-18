@@ -250,6 +250,8 @@ package {
 		public override function writeText( text:String ) : void {
 			// DEBUG - append to canvas stream
 			m_document.updateText( text );
+			
+			super.writeText( text );
 		}
 	}
 }
