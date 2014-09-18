@@ -105,21 +105,22 @@ package GlassLabSDK {
 		private var m_dispatchCount : int;				// Local counter for dispatching telemetry
 		private var m_dispatching : Boolean;			// Indicates if the SDK is in the middle of dispatching events
 		
+		
+		private var m_callbacksAdded : Boolean = false;
+		
 
 		/**
 		* Default constructor initializes client properties and prepares an "empty" machine
 		* ready to communicate to the server.
 		*/
 		public function glsdk_core() {
+			// Allow communication between both http and https
+			flash.system.Security.allowDomain( "*" );
+			flash.system.Security.allowInsecureDomain( "*" );
+			
 			// Setup the ExternalInterface callback functions. These callback functions will redirect
 			// to the appropriate internal callback function using the attached "api" variable.
-			if( !isLocal() ) {
-				Security.allowDomain( "*" );
-				if( ExternalInterface.available ) {
-					ExternalInterface.addCallback( "success", eiSuccessCallback );
-					ExternalInterface.addCallback( "failure", eiFailureCallback );
-				}
-			}
+			m_callbacksAdded = false;
 			
 			// Default id variables
 			m_serverUri = "";
@@ -160,6 +161,37 @@ package GlassLabSDK {
 			
 			// Initialize the message queue
 			m_messageQueue = new Array();
+		}
+		
+		
+		/**
+		* Generic success callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiSuccessCallback( key:String, response:String ) : void {
+			//writeText( "in success (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Done" ]( event );
+		}
+		
+		/**
+		* Generic failure callback function for all HTTP requests going through ExternalInterface.
+		*
+		* @param key The api key referring to the callback function to fire.
+		* @param response The server response JSON blob.
+		*/
+		private function eiFailureCallback( key:String, response:String ) : void {
+			//writeText( "in failure (" + key + ") callback: " + response );
+			
+			var event:Object = {};
+			event.target = { data: response };
+			
+			this[ key + "_Fail" ]( event );
 		}
 		
 		
@@ -323,10 +355,55 @@ package GlassLabSDK {
 		* @see httpRequest
 		*/
 		public function connect( clientId:String, deviceId:String, serverUri:String ) : void {
+			if( !isLocal() ) {
+				if( !m_callbacksAdded && ExternalInterface.available ) {
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+					m_callbacksAdded = true;
+				}
+			}
+			
 			// Set the Id variables and URI
 			m_clientId = clientId;
 			m_deviceId = deviceId;
 			m_serverUri = serverUri;
+			
+			// Perform the request
+			httpRequest( new glsdk_dispatch( glsdk_const.API_CONNECT, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, connect_Done, connect_Fail ) );
+		}
+		/**
+		* Helper function for connecting directly with the server using the URL of the container host.
+		* This particular request will not be inserted into the queue. Instead, it is called immediately.
+		* This server call will return the server we should reroute requests to, if one is specified.
+		*
+		* If this request is successful, MESSAGE_CONNECT will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param clientId The product or game's client Id.
+		* @param deviceId The unique Id of the device.
+		* @param serverUri The Uri of the server to connect to.
+		*
+		* @see httpRequest
+		*/
+		public function connectWithContainerHost( clientId:String, deviceId:String, serverUri:String ) : void {
+			// Set the Id variables and URI
+			m_clientId = clientId;
+			m_deviceId = deviceId;
+			
+			// Check for the existence of an external interface
+			// If it does exist, get the server protocol and host
+			if( !isLocal() && ExternalInterface.available ) {
+				// Call the SDK service on angular
+				var protocol : String = ExternalInterface.call( "window.location.protocol" );
+				var host : String = ExternalInterface.call( "window.location.host" );
+				
+				// Set the server URI
+				m_serverUri = protocol + "//" + host;
+			}
+			// If the external interface doesn't exist, use a default URL
+			else {
+				m_serverUri = serverUri;
+			}
 			
 			// Perform the request
 			httpRequest( new glsdk_dispatch( glsdk_const.API_CONNECT, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, connect_Done, connect_Fail ) );
@@ -958,6 +1035,12 @@ package GlassLabSDK {
 			// Check for the existence of an external interface
 			// If it does exist, perform requests on the javascript layer
 			if( !isLocal() && ExternalInterface.available ) {
+				if( !m_callbacksAdded ) {
+					m_callbacksAdded = true;
+					ExternalInterface.addCallback( "success", eiSuccessCallback );
+					ExternalInterface.addCallback( "failure", eiFailureCallback );
+				}
+				
 				// Create the request object as a blob
 				var req : Object = new Object();
 				req.key = dispatch.m_path.KEY
@@ -1008,35 +1091,7 @@ package GlassLabSDK {
 			}
 		}
 		
-		/**
-		* Generic success callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiSuccessCallback( key:String, response:String ) : void {
-			//writeText( "in success (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Done" ]( event );
-		}
 		
-		/**
-		* Generic failure callback function for all HTTP requests going through ExternalInterface.
-		*
-		* @param key The api key referring to the callback function to fire.
-		* @param response The server response JSON blob.
-		*/
-		private function eiFailureCallback( key:String, response:String ) : void {
-			//writeText( "in failure (" + key + ") callback: " + response );
-			
-			var event:Object = {};
-			event.target = { data: response };
-			
-			this[ key + "_Done" ]( event );
-		}
 		
 		/**
 		* Failure callback function for any security error and invalid request. Adds an ERROR
@@ -1284,6 +1339,10 @@ package GlassLabSDK {
 		/*
 		 * DEBUG text writing.
 		 */
-		public function writeText( text:String ) : void {}
+		public function writeText( text:String ) : void {
+			/*if( ExternalInterface.available ) {
+				ExternalInterface.call( "console.log", text );
+			}*/
+		}
 	}
 }
