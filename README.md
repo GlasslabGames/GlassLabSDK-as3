@@ -62,13 +62,40 @@ Sample API
 A sample API is provided in the examples folder.
 
 To use this sample, focus the canvas and use the following keys:
-- start a session with S
-- end the session with E
-- send telemetry with T
+- [S] start a session (queued)
+- [E] end the session (queued, requires active session)
+- [T] send sample telemetry (queued, requires active session)
+- [A] check authentication status (immediate)
+- [Q] get achievements (immediate, requires authentication)
+- [W] post sample achievement (queued, requires authentication)
+- [G] get save game from cloud (immediate, requires authentication)
+- [G] post sample save game (queued, requires authentication)
+
+Some requests happen immediately while other are queued. These attributes are noted with each above request. Additionally, some requests require successfuly authentication in order to return a success. See the section below on testing in an authenticated sandbox.
 
 Success and failure from the server is determined by order of calls received. Keep the following in mind:
 - You cannot send telemetry if no session is active. Call start session first.
 - You cannot close a session that doesn't exist. Call start session first.
+
+
+Testing in the Playfully Sandbox
+--------------------------------
+
+Your .swf can be embedded in the Playfully front-end. This allows your .swf to take advantage of Playfully's authentication services. Since the .swf will be embedded in the page, browser session information is shared and there is no need for you to manually login inside  the .swf. As expained in the previous section, an authenticated user can take advantage of several APIs the SDK provides, including achievement, total time played, and save game services. To use this sandbox, your .swf must be hosted on another server, CDN, or other cloud storage service.
+
+The sandbox is located at [http://developer.playfully.org/assets/flash-sample/flash-sample.html](http://developer.playfully.org/assets/flash-sample/flash-sample.html "http://developer.playfully.org/assets/flash-sample/flash-sample.html"). Set the fields for SWF URL, width, and height, and click "Load SWF" to preview it in the window below. This sandbox allows you to interact with your game from within the Playfully domain.
+
+If you want to simulate your .swf with an authenticated user, you must login prior to loading the .swf. Go to [http://developer.playfully.org](http://developer.playfully.org "http://developer.playfully.org"), sign in as either a teacher or a student, then navigate back to the sandbox. The browser session established for that logged in user is now shared with your .swf.
+
+**Debugging**
+
+To see successful and failed requests, you can take advantage of the debugging features with the Javascript SDK wrapper. In the browser console, type in the following to print out further SDK requests:
+
+```
+GlassLabSDK.displayLogs()
+```
+
+While you use any browser application connected with the SDK, all request and response information will be displayed here.
 
 
 Telemetry Format and Examples

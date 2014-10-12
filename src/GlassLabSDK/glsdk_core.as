@@ -72,6 +72,7 @@ package GlassLabSDK {
 		// Client properties
 		private var m_serverUri : String;		// Ex. http://argubotacademy.org
 		private var m_clientId : String;		// Ex. AA-1
+		private var m_gameSecret : String;		// Ex. 646b502aa4fded5a0c1e24552e241c06d36b7eb405ea9d63b20a4bbfa2bccb3c
 		private var m_clientName : String;		// Ex. Mars Generation One: Argubot Academy
 		private var m_clientVersion : String;	// Ex. 1.02
 		private var m_clientLevel : String;		// Ex. MGO_launch, MGO_act1
@@ -125,6 +126,7 @@ package GlassLabSDK {
 			// Default id variables
 			m_serverUri = "";
 			m_clientId = "";
+			m_gameSecret = "";
 			m_clientName = "";
 			m_clientVersion = "";
 			m_clientLevel = "";
@@ -1047,6 +1049,7 @@ package GlassLabSDK {
 				req.api = dispatch.m_path.API;
 				req.method = dispatch.m_method;
 				req.contentType = dispatch.m_contentType;
+				req.gameSecret = m_gameSecret;
 				
 				// Parse the API path for :gameId
 				req.api = req.api.split( ":gameId" ).join( m_clientId );
@@ -1310,6 +1313,9 @@ package GlassLabSDK {
 		public function set clientId( value:String ) : void {
 			m_clientId = value;
 		}
+		public function set gameSecret( value:String ) : void {
+			m_gameSecret = value;
+		}
 		public function set clientName( value:String ) : void {
 			m_clientName = value;
 		}
@@ -1325,6 +1331,9 @@ package GlassLabSDK {
 		}
 		public function get clientId() : String {
 			return m_clientId;
+		}
+		public function get gameSecret() : String {
+			return m_gameSecret;
 		}
 		public function get clientName() : String {
 			return m_clientName;
