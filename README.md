@@ -69,7 +69,7 @@ To use this sample, focus the canvas and use the following keys:
 - [Q] get achievements (immediate, requires authentication)
 - [W] post sample achievement (queued, requires authentication)
 - [G] get save game from cloud (immediate, requires authentication)
-- [G] post sample save game (queued, requires authentication)
+- [H] post sample save game (queued, requires authentication)
 
 Some requests happen immediately while other are queued. These attributes are noted with each above request. Additionally, some requests require successfuly authentication in order to return a success. See the section below on testing in an authenticated sandbox.
 
