@@ -46,7 +46,7 @@ package GlassLabSDK {
 	
 	public class glsdk_const {
 
-		public static const SDK_VERSION : String = "1.1.0";
+		public static const SDK_VERSION : String = "1.2.0";
 		
 		public static const API_CONNECT					: Object = { KEY: "connect",				API: "/sdk/connect" };
 		public static const API_GET_CONFIG 				: Object = { KEY: "getConfig", 				API: "/api/v2/data/config/:gameId" };
@@ -54,6 +54,7 @@ package GlassLabSDK {
 		public static const API_POST_DEVICE_UPDATE 		: Object = { KEY: "deviceUpdate", 			API: "/api/v2/data/game/device" };
 		public static const API_GET_PLAYER_INFO 		: Object = { KEY: "getPlayerInfo", 			API: "/api/v2/data/game/:gameId/playInfo" };
 		public static const API_POST_TOTAL_TIME_PLAYED 	: Object = { KEY: "sendTotalTimePlayed", 	API: "/api/v2/data/game/:gameId/totalTimePlayed" };
+		public static const API_GET_PLAY_SESSION_START 	: Object = { KEY: "startPlaySession", 		API: "/api/v2/data/playSession/start" };
 		public static const API_POST_SESSION_START 		: Object = { KEY: "startSession", 			API: "/api/v2/data/session/start" };
 		public static const API_POST_SESSION_END 		: Object = { KEY: "endSession", 			API: "/api/v2/data/session/end" };
 		public static const API_POST_EVENTS 			: Object = { KEY: "sendTelemEvents", 		API: "/api/v2/data/events" };

@@ -79,7 +79,8 @@ package GlassLabSDK {
 		
 		// User properties
 		private var m_deviceId : String;		// Unique Id accompanied with the session indicating device
-		private var m_gameSessionId : String;	// Unique Id denoting a game session, set on startSession success
+		private var m_playSessionId : String;	// Unique Id denoting a play session, set on startPlaySession success
+		private var m_gameSessionId : String;	// Unique Id denoting a unit of analysis, set on startSession success
 		
 		// Config object
 		private var m_config : Object;	// Object contains config variables used for throttling telemetry	
@@ -89,7 +90,8 @@ package GlassLabSDK {
 		private var m_telemEventValues : Object;	// Array containing unique event values for a single event
 		
 		// Default telemetry properties
-		private var m_gameSessionEventOrder : int;	// This is an incremented counter attached to each telemetry event, resets with every new session
+		private var m_gameSessionEventOrder : int;	// This is an incremented counter attached to each telemetry event, resets with every new unit of analysis
+		private var m_playSessionEventOrder : int;	// This is an incremented counter attached to each telemetry event, resets with every new play session
 		private var m_totalTimePlayed : Number;		// Total amount of time played for the user
 		
 		// Update timer and other total time played variables
@@ -144,6 +146,7 @@ package GlassLabSDK {
 			
 			// Default telemetry properties
 			m_gameSessionEventOrder = 1;
+			m_playSessionEventOrder = 1;
 			m_totalTimePlayed = 0;
 			
 			// Create the update timer
@@ -458,8 +461,9 @@ package GlassLabSDK {
 			
 			pushMessageQueue( glsdk_const.MESSAGE_GET_CONFIG, event.target.data );
 			
-			// Once we have a successful connection, get the player info
+			// Once we have a successful connection, get the player info and start the play session
 			getPlayerInfo();
+			startPlaySession();
 		}
 		/**
 		* Helper function for getting config info from the server. This particular request will not
@@ -621,6 +625,42 @@ package GlassLabSDK {
 		public function getPlayerInfo() : void {
 			// Perform the request
 			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_PLAYER_INFO, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, getPlayerInfo_Done, getPlayerInfo_Fail ) );
+		}
+		
+		
+		/**
+		* Failure callback function for the startPlaySession() http request.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*/
+		private function startPlaySession_Fail( event:Object ) : void {
+			trace( "startPlaySession_Fail: " + event.target.data );
+		}
+		/**
+		* Success callback function for the startPlaySession() http request. This response will
+		* include JSON data with the playSessionId embedded. This Id should be set as the current
+		* playSessionId to attach to each telemetry event.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*/
+		private function startPlaySession_Done( event:Object ) : void {
+			trace( "startPlaySession_Done: " + event.target.data );
+			
+			// Parse the returned JSON and retrieve the game session Id
+			var parsedJSON : Object = glsdk_json.instance().parse( event.target.data );
+			if( parsedJSON.hasOwnProperty( "playSessionId" ) ) {
+				m_playSessionId = parsedJSON.gplaySessionId;
+				trace( "Found play session Id: " + m_playSessionId );
+			}
+		}
+		/**
+		* Helper function for starting a new play session.
+		*
+		* This request will not push anything to the message queue.
+		*/
+		public function startPlaySession() : void {
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_PLAY_SESSION_START, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, startPlaySession_Done, startPlaySession_Fail ) );
 		}
 		
 
@@ -1010,6 +1050,9 @@ package GlassLabSDK {
 			postData.group = group;
 			postData.subGroup = subGroup;
 			
+			// Saving an achievement will also internally save a telemetry event
+			saveTelemEventWithData( "Achievement", { item: item, group: group, subGroup: subGroup } );
+			
 			// Store the dispatch message to be called later
 			pushTelemetryQueue( new glsdk_dispatch( glsdk_const.API_POST_ACHIEVEMENTS, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, saveAchievement_Done, saveAchievement_Fail ) );
 		}
@@ -1207,7 +1250,9 @@ package GlassLabSDK {
 			telemEvent.eventName = p_eventName;
 			telemEvent.gameId = m_clientId;
 			telemEvent.gameSessionId = "$gameSessionId$";
+			telemEvent.playSessionId = m_playSessionId;
 			telemEvent.gameSessionEventOrder = m_gameSessionEventOrder++;
+			telemEvent.playSessionEventOrder = m_playSessionEventOrder++;
 			telemEvent.totalTimePlayed = m_totalTimePlayed;
 			
 			// Set the device Id if it is valid
@@ -1264,7 +1309,9 @@ package GlassLabSDK {
 			telemEvent.eventName = p_eventName;
 			telemEvent.gameId = m_clientId;
 			telemEvent.gameSessionId = "$gameSessionId$";
+			telemEvent.playSessionId = m_playSessionId;
 			telemEvent.gameSessionEventOrder = m_gameSessionEventOrder++;
+			telemEvent.playSessionEventOrder = m_playSessionEventOrder++;
 			telemEvent.totalTimePlayed = m_totalTimePlayed;
 			
 			// Set the device Id if it is valid
