@@ -991,7 +991,7 @@ package GlassLabSDK {
 		*/
 		public function postSaveGame( data:Object ) : void {
 			// Store the dispatch message to be called later
-			pushTelemetryQueue( new glsdk_dispatch( glsdk_const.API_POST_SAVE_GAME, "POST", data, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, postSaveGame_Done, postSaveGame_Fail ) );
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_SAVE_GAME, "POST", data, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, postSaveGame_Done, postSaveGame_Fail ) );
 		}
 		/**
 		* Helper function for posting save game binary data to the server.
