@@ -909,7 +909,8 @@ package GlassLabSDK {
 		
 		/**
 		* Failure callback function for the getSaveGame() http request. Adds an MESSAGE_GET_SAVE_GAME
-		* response to the message queue.
+		* response to the message queue. This function will also check for "no.data" as the key
+		* attribute in the JSON data to return a specific success message indicating new user.
 		*
 		* @param event A reference to the IOErrorEvent object sent along with the listener.
 		*
@@ -918,7 +919,24 @@ package GlassLabSDK {
 		private function getSaveGame_Fail( event:Object ) : void {
 			trace( "getSaveGame_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, false, event.target.data );
+			// Set the return data as we may modify it
+			var returnData = event.target.data;
+			var success = false;
+			
+			// Get the JSON and parse it
+			var parsedJSON : Object = glsdk_json.instance().parse( event.target.data );
+			if( parsedJSON.hasOwnProperty( "error" ) ) {
+				// We're looking for a specific key
+				if( parsedJSON.hasOwnProperty( "key" ) ) {
+					// No data means a new user/game
+					if( parsedJSON.key == "no.data" ) {
+						returnData = { foundSaveGame: false, game: {} };
+						success = true;
+					}
+				}
+			}
+			
+			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, success, returnData );
 			dispatchNext();
 		}
 		/**
@@ -940,7 +958,7 @@ package GlassLabSDK {
 				bytes.inflate();
 				
 				// Read the save game object
-				event.target.data = bytes;
+				event.target.data = { foundSaveGame: true, game: bytes };
 			}
 			
 			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, true, event.target.data );
