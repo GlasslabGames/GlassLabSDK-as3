@@ -46,7 +46,7 @@ package GlassLabSDK {
 	
 	public class glsdk_const {
 
-		public static const SDK_VERSION : String = "1.3.0";
+		public static const SDK_VERSION : String = "1.3.1";
 		
 		public static const API_CONNECT					: Object = { KEY: "connect",				API: "/sdk/connect" };
 		public static const API_GET_CONFIG 				: Object = { KEY: "getConfig", 				API: "/api/v2/data/config/:gameId" };

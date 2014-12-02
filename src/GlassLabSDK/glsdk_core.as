@@ -1268,7 +1268,7 @@ package GlassLabSDK {
 			}
 			// Set the game type if it is valid
 			if( m_clientLevel != "" ) {
-				telemEvent.gameType = m_clientLevel;
+				telemEvent.gameLevel = m_clientLevel;
 			}
 			
 			// Set the event data
@@ -1327,7 +1327,7 @@ package GlassLabSDK {
 			}
 			// Set the game type if it is valid
 			if( m_clientLevel != "" ) {
-				telemEvent.gameType = m_clientLevel;
+				telemEvent.gameLevel = m_clientLevel;
 			}
 			
 			// Set the event data
