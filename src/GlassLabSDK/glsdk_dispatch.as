@@ -56,12 +56,12 @@ package GlassLabSDK {
 		/**
 		* Parameterized constructor requires all fields for a successful dispatch.
 		*
-		* param p_path The API key and path.
-		* param p_method The method type.
-		* param p_postData The post data. This can be blank or an empty JSON object.
-		* param p_contentType The content type.
-		* param p_successCallback The success callback function.
-		* param p_failureCallback The failure callback function.
+		* @param p_path The API key and path.
+		* @param p_method The method type.
+		* @param p_postData The post data. This can be blank or an empty JSON object.
+		* @param p_contentType The content type.
+		* @param p_successCallback The success callback function.
+		* @param p_failureCallback The failure callback function.
 		*/
 		public function glsdk_dispatch( p_path:Object, p_method:String, p_postData:Object, p_contentType:String, p_successCallback:Function, p_failureCallback:Function ) {
 			m_path = p_path;
