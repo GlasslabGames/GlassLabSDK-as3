@@ -923,15 +923,22 @@ package GlassLabSDK {
 			var returnData = event.target.data;
 			var success = false;
 			
+			// If this isn't valid JSON, no save data found
+			if( returnData == "" ) {
+				returnData = { foundSaveGame: false, game: {} };
+				success = false;
+			}
 			// Get the JSON and parse it
-			var parsedJSON : Object = glsdk_json.instance().parse( event.target.data );
-			if( parsedJSON.hasOwnProperty( "error" ) ) {
-				// We're looking for a specific key
-				if( parsedJSON.hasOwnProperty( "key" ) ) {
-					// No data means a new user/game
-					if( parsedJSON.key == "no.data" ) {
-						returnData = { foundSaveGame: false, game: {} };
-						success = true;
+			else {
+				var parsedJSON : Object = glsdk_json.instance().parse( event.target.data );
+				if( parsedJSON.hasOwnProperty( "error" ) ) {
+					// We're looking for a specific key
+					if( parsedJSON.hasOwnProperty( "key" ) ) {
+						// No data means a new user/game
+						if( parsedJSON.key == "no.data" ) {
+							returnData = { foundSaveGame: false, game: {} };
+							success = true;
+						}
 					}
 				}
 			}
