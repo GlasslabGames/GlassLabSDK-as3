@@ -960,7 +960,11 @@ package GlassLabSDK {
 				// Read the save game object
 				event.target.data = { foundSaveGame: true, game: bytes };
 			}
+			else {
+				event.target.data = { foundSaveGame: true, game: parsedJSON };
+			}
 			
+			// Add this response to the queue and dispatch the next message
 			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, true, event.target.data );
 			dispatchNext();
 		}
@@ -1026,6 +1030,47 @@ package GlassLabSDK {
 			
 			// Call the base function accepting a generic object, after converting
 			postSaveGame( { "binary": Hex.fromArray( byteArray ) } );
+		}
+		
+		
+		/**
+		* Failure callback function for the deleteSaveGame() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function deleteSaveGame_Fail( event:Object ) : void {
+			trace( "deleteSaveGame_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the deleteSaveGame() http request. Adds an MESSAGE_DELETE_SAVE_GAME
+		* response to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function deleteSaveGame_Done( event:Object ) : void {
+			trace( "deleteSaveGame_Done: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_DELETE_SAVE_GAME, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for deleting save game data to the server.
+		*
+		* If this request is successful, MESSAGE_DELETE_SAVE_GAME will be the response, otherwise
+		* MESSAGE_ERROR.
+		*/
+		public function deleteSaveGame() : void {
+			// Store the dispatch message to be called later
+			// Removed because "DELETE" is not a supported method type in flash...
+			//httpRequest( new glsdk_dispatch( glsdk_const.API_DELETE_SAVE_GAME, "DELETE", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, deleteSaveGame_Done, deleteSaveGame_Fail ) );
 		}
 		
 		

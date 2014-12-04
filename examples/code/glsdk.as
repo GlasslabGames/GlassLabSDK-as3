@@ -148,6 +148,13 @@ package {
 						writeText( "MESSAGE_POST_SAVE_GAME " + response.m_data );
 						break;
 					
+					case glsdk_const.MESSAGE_DELETE_SAVE_GAME:
+						trace( "MESSAGE_DELETE_SAVE_GAME " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_DELETE_SAVE_GAME " + response.m_data );
+						break;
+					
 					case glsdk_const.MESSAGE_ERROR:
 						trace( "MESSAGE_ERROR " + response.m_data );
 					

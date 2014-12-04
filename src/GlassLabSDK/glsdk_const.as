@@ -62,6 +62,7 @@ package GlassLabSDK {
 		public static const API_POST_ACHIEVEMENTS 		: Object = { KEY: "saveAchievement", 		API: "/api/v2/data/game/:gameId/achievement" };
 		public static const API_GET_SAVE_GAME 			: Object = { KEY: "getSaveGame", 			API: "/api/v2/data/game/:gameId" };
 		public static const API_POST_SAVE_GAME 			: Object = { KEY: "postSaveGame", 			API: "/api/v2/data/game/:gameId" };
+		public static const API_DELETE_SAVE_GAME 		: Object = { KEY: "deleteSaveGame", 		API: "/api/v2/data/game/:gameId" };
 		
 		public static const CONTENT_TYPE_APPLICATION_JSON					: String = "application/json";
 		public static const CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED	: String = "application/x-www-form-urlencoded";
@@ -79,7 +80,8 @@ package GlassLabSDK {
 		public static const MESSAGE_POST_ACHIEVEMENT 		: int = 10;
 		public static const MESSAGE_GET_SAVE_GAME 			: int = 11;
 		public static const MESSAGE_POST_SAVE_GAME 			: int = 12;
-		public static const MESSAGE_ERROR 					: int = 13;
+		public static const MESSAGE_DELETE_SAVE_GAME 		: int = 13;
+		public static const MESSAGE_ERROR 					: int = 14;
 		
 		public static const UPDATE_TIMER				: int = 3;	// Update function is called at this interval
 		public static const TELEMETRY_DISPATCH_CHUNK 	: int = 32;	// Dispatch a number of telemetry events per tick
