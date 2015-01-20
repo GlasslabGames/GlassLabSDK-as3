@@ -868,46 +868,6 @@ package GlassLabSDK {
 		
 		
 		/**
-		* Failure callback function for the getAchievements() http request. Adds an ERROR response
-		* to the message queue.
-		*
-		* @param event A reference to the IOErrorEvent object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Fail( event:Object ) : void {
-			trace( "sendAchievement_Fail: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Success callback function for the getAchievements() http request. Adds an MESSAGE_GET_ACHIEVEMENTS response
-		* to the message queue.
-		*
-		* @param event A reference to the Event object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Done( event:Object ) : void {
-			trace( "sendAchievement_Done: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_ACHIEVEMENTS, true, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Helper function for sending an achievement to the server.
-		*
-		* If this request is successful, MESSAGE_GET_ACHIEVEMENTS will be the response, otherwise
-		* MESSAGE_ERROR.
-		*/
-		public function getAchievements() : void {
-			// Store the dispatch message to be called later
-			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_ACHIEVEMENTS, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, getAchievements_Done, getAchievements_Fail ) );
-		}
-		
-		
-		/**
 		* Failure callback function for the getSaveGame() http request. Adds an MESSAGE_GET_SAVE_GAME
 		* response to the message queue. This function will also check for "no.data" as the key
 		* attribute in the JSON data to return a specific success message indicating new user.

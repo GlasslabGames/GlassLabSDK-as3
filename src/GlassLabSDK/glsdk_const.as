@@ -58,7 +58,6 @@ package GlassLabSDK {
 		public static const API_POST_SESSION_START 		: Object = { KEY: "startSession", 			API: "/api/v2/data/session/start" };
 		public static const API_POST_SESSION_END 		: Object = { KEY: "endSession", 			API: "/api/v2/data/session/end" };
 		public static const API_POST_EVENTS 			: Object = { KEY: "sendTelemEvents", 		API: "/api/v2/data/events" };
-		public static const API_GET_ACHIEVEMENTS 		: Object = { KEY: "getAchievements", 		API: "/api/v2/dash/game/:gameId/achievements/all" };
 		public static const API_POST_ACHIEVEMENTS 		: Object = { KEY: "saveAchievement", 		API: "/api/v2/data/game/:gameId/achievement" };
 		public static const API_GET_SAVE_GAME 			: Object = { KEY: "getSaveGame", 			API: "/api/v2/data/game/:gameId" };
 		public static const API_POST_SAVE_GAME 			: Object = { KEY: "postSaveGame", 			API: "/api/v2/data/game/:gameId" };
@@ -76,12 +75,11 @@ package GlassLabSDK {
 		public static const MESSAGE_SESSION_START 			: int = 6;
 		public static const MESSAGE_SESSION_END 			: int = 7;
 		public static const MESSAGE_EVENTS 					: int = 8;
-		public static const MESSAGE_GET_ACHIEVEMENTS 		: int = 9;
-		public static const MESSAGE_POST_ACHIEVEMENT 		: int = 10;
-		public static const MESSAGE_GET_SAVE_GAME 			: int = 11;
-		public static const MESSAGE_POST_SAVE_GAME 			: int = 12;
-		public static const MESSAGE_DELETE_SAVE_GAME 		: int = 13;
-		public static const MESSAGE_ERROR 					: int = 14;
+		public static const MESSAGE_POST_ACHIEVEMENT 		: int = 9;
+		public static const MESSAGE_GET_SAVE_GAME 			: int = 10;
+		public static const MESSAGE_POST_SAVE_GAME 			: int = 11;
+		public static const MESSAGE_DELETE_SAVE_GAME 		: int = 12;
+		public static const MESSAGE_ERROR 					: int = 13;
 		
 		public static const UPDATE_TIMER				: int = 3;	// Update function is called at this interval
 		public static const TELEMETRY_DISPATCH_CHUNK 	: int = 32;	// Dispatch a number of telemetry events per tick

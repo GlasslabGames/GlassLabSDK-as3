@@ -120,13 +120,6 @@ package {
 						writeText( "MESSAGE_POST_TOTAL_TIME_PLAYED " + response.m_data );
 						break;
 					
-					case glsdk_const.MESSAGE_GET_ACHIEVEMENTS:
-						trace( "MESSAGE_GET_ACHIEVEMENTS " + response.m_data );
-					
-						// DEBUG - append to canvas stream
-						writeText( "MESSAGE_GET_ACHIEVEMENTS " + response.m_data );
-						break;
-					
 					case glsdk_const.MESSAGE_POST_ACHIEVEMENT:
 						trace( "MESSAGE_POST_ACHIEVEMENT " + response.m_data );
 					
@@ -221,10 +214,6 @@ package {
 			else if( event.charCode == 97 ) {	// A
 				writeText( "Attempting to get auth status..." );
 				getAuthStatus();
-			}
-			else if( event.charCode == 113 ) {	// Q
-				writeText( "Attempting to get all achievements..." );
-				getAchievements();
 			}
 			else if( event.charCode == 119 ) {	// W
 				writeText( "Attempting to send an achievement..." );
