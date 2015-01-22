@@ -148,6 +148,27 @@ package {
 						writeText( "MESSAGE_DELETE_SAVE_GAME " + response.m_data );
 						break;
 					
+					case glsdk_const.MESSAGE_CREATE_MATCH:
+						trace( "MESSAGE_CREATE_MATCH " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_CREATE_MATCH " + response.m_data );
+						break;
+					
+					case glsdk_const.MESSAGE_UPDATE_MATCH:
+						trace( "MESSAGE_UPDATE_MATCH " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_UPDATE_MATCH " + response.m_data );
+						break;
+					
+					case glsdk_const.MESSAGE_POLL_MATCHES:
+						trace( "MESSAGE_POLL_MATCHES " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_POLL_MATCHES " + response.m_data );
+						break;
+					
 					case glsdk_const.MESSAGE_ERROR:
 						trace( "MESSAGE_ERROR " + response.m_data );
 					
@@ -236,6 +257,14 @@ package {
 				// Post the save game data
 				postSaveGameBinary( bytes );
 			}
+			/*else if( event.charCode == 109 ) {	// M
+				writeText( "Attempting to create a new match..." );
+				createMatch();
+			}
+			else if( event.charCode == 117 ) {	// U
+				writeText( "Attempting to update a match..." );
+				updateMatch();
+			}*/
 		}
 		
 		/**
