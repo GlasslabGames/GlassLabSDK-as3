@@ -334,6 +334,7 @@ package GlassLabSDK {
 		* @param event A reference to the TimerEvent object sent along with the listener.
 		*/
 		private function pollMatchesUpdate( event:TimerEvent ) : void {
+			return;
 			pollMatches();
 		}
 		
