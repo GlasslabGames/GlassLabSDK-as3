@@ -1160,11 +1160,12 @@ package GlassLabSDK {
 		* @param opponentId The opponent's user Id.
 		*/
 		public function createMatch( opponentId:int ) : void {
-			var dispatchObject: Object = glsdk_const.API_GET_CREATE_MATCH;
-			dispatchObject.API += "/" + opponentId;
+			// Set the post data
+			var postData : Object = new Object();
+			postData.invitedUsers = opponentId;
 			
 			// Store the dispatch message to be called later
-			httpRequest( new glsdk_dispatch( dispatchObject, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, createMatch_Done, createMatch_Fail ) );
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_CREATE_MATCH, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, createMatch_Done, createMatch_Fail ) );
 		}
 		
 		

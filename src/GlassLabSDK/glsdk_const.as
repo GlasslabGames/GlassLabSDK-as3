@@ -61,8 +61,8 @@ package GlassLabSDK {
 		public static const API_POST_ACHIEVEMENTS 		: Object = { KEY: "saveAchievement", 		API: "/api/v2/data/game/:gameId/achievement" };
 		public static const API_GET_SAVE_GAME 			: Object = { KEY: "getSaveGame", 			API: "/api/v2/data/game/:gameId" };
 		public static const API_POST_SAVE_GAME 			: Object = { KEY: "postSaveGame", 			API: "/api/v2/data/game/:gameId" };
-		public static const API_GET_CREATE_MATCH 		: Object = { KEY: "createMatch", 			API: "/api/v2/data/game/:gameId/user" };
-		public static const API_POST_UPDATE_MATCH 		: Object = { KEY: "updateMatch", 			API: "/api/v2/data/game/:gameId/update" };
+		public static const API_POST_CREATE_MATCH 		: Object = { KEY: "createMatch", 			API: "/api/v2/data/game/:gameId/create" };
+		public static const API_POST_UPDATE_MATCH 		: Object = { KEY: "updateMatch", 			API: "/api/v2/data/game/:gameId/submit" };
 		public static const API_GET_POLL_MATCHES 		: Object = { KEY: "pollMatches", 			API: "/api/v2/data/game/:gameId/matches" };
 		
 		public static const CONTENT_TYPE_APPLICATION_JSON					: String = "application/json";
