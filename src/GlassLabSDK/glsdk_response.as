@@ -34,9 +34,8 @@ either expressed or implied, of the FreeBSD Project.
 * glsdk_response.as
 * GlassLab SDK
 *
-* A response object represents a server response, including the type of message and
-* accompanying JSON data. It is possible for the JSON data to be empty, which usually
-* indicates success.
+* A response object represents a server response, including the type of message, the success
+* or failure of the message, and accompanying JSON data.
 *
 * @author Ben Dapkiewicz
 *
@@ -46,18 +45,21 @@ package GlassLabSDK {
 	
 	public class glsdk_response {
 
-		public var m_message : int;	// The message type referenced from glsdk_const.
-		public var m_data : Object;	// The actual response data in JSON form.
+		public var m_message : int;		// The message type referenced from glsdk_const.
+		public var m_success : Boolean;	// Message status, either successful or failed
+		public var m_data : Object;		// The actual response data in JSON form
 		
 		
 		/**
 		* Parameterized constructor requires all fields for the response object.
 		*
-		* param message An int referring to one of the message response constant.
-		* param data The response data in JSON form.
+		* @param message An int referring to one of the message response constant.
+		* @param success A boolean indicating the success or failure of the request.
+		* @param data The response data in JSON form.
 		*/
-		public function glsdk_response( message:int, data:Object ) {
+		public function glsdk_response( message:int, success:Boolean, data:Object ) {
 			m_message = message;
+			m_success = success;
 			m_data = data;
 		}
 	}

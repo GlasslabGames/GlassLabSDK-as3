@@ -46,7 +46,7 @@ package GlassLabSDK {
 	
 	public class glsdk_const {
 
-		public static const SDK_VERSION : String = "1.2.3";
+		public static const SDK_VERSION : String = "1.4.0";
 		
 		public static const API_CONNECT					: Object = { KEY: "connect",				API: "/sdk/connect" };
 		public static const API_GET_CONFIG 				: Object = { KEY: "getConfig", 				API: "/api/v2/data/config/:gameId" };
@@ -58,10 +58,12 @@ package GlassLabSDK {
 		public static const API_POST_SESSION_START 		: Object = { KEY: "startSession", 			API: "/api/v2/data/session/start" };
 		public static const API_POST_SESSION_END 		: Object = { KEY: "endSession", 			API: "/api/v2/data/session/end" };
 		public static const API_POST_EVENTS 			: Object = { KEY: "sendTelemEvents", 		API: "/api/v2/data/events" };
-		public static const API_GET_ACHIEVEMENTS 		: Object = { KEY: "getAchievements", 		API: "/api/v2/dash/game/:gameId/achievements/all" };
 		public static const API_POST_ACHIEVEMENTS 		: Object = { KEY: "saveAchievement", 		API: "/api/v2/data/game/:gameId/achievement" };
 		public static const API_GET_SAVE_GAME 			: Object = { KEY: "getSaveGame", 			API: "/api/v2/data/game/:gameId" };
 		public static const API_POST_SAVE_GAME 			: Object = { KEY: "postSaveGame", 			API: "/api/v2/data/game/:gameId" };
+		public static const API_POST_CREATE_MATCH 		: Object = { KEY: "createMatch", 			API: "/api/v2/data/game/:gameId/create" };
+		public static const API_POST_UPDATE_MATCH 		: Object = { KEY: "updateMatch", 			API: "/api/v2/data/game/:gameId/submit" };
+		public static const API_GET_POLL_MATCHES 		: Object = { KEY: "pollMatches", 			API: "/api/v2/data/game/:gameId/matches" };
 		
 		public static const CONTENT_TYPE_APPLICATION_JSON					: String = "application/json";
 		public static const CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED	: String = "application/x-www-form-urlencoded";
@@ -75,18 +77,22 @@ package GlassLabSDK {
 		public static const MESSAGE_SESSION_START 			: int = 6;
 		public static const MESSAGE_SESSION_END 			: int = 7;
 		public static const MESSAGE_EVENTS 					: int = 8;
-		public static const MESSAGE_GET_ACHIEVEMENTS 		: int = 9;
-		public static const MESSAGE_POST_ACHIEVEMENT 		: int = 10;
-		public static const MESSAGE_GET_SAVE_GAME 			: int = 11;
-		public static const MESSAGE_POST_SAVE_GAME 			: int = 12;
-		public static const MESSAGE_ERROR 					: int = 13;
+		public static const MESSAGE_POST_ACHIEVEMENT 		: int = 9;
+		public static const MESSAGE_GET_SAVE_GAME 			: int = 10;
+		public static const MESSAGE_POST_SAVE_GAME 			: int = 11;
+		public static const MESSAGE_DELETE_SAVE_GAME 		: int = 12;
+		public static const MESSAGE_CREATE_MATCH	 		: int = 13;
+		public static const MESSAGE_UPDATE_MATCH	 		: int = 14;
+		public static const MESSAGE_POLL_MATCHES	 		: int = 15;
+		public static const MESSAGE_ERROR 					: int = 16;
 		
 		public static const UPDATE_TIMER				: int = 3;	// Update function is called at this interval
 		public static const TELEMETRY_DISPATCH_CHUNK 	: int = 32;	// Dispatch a number of telemetry events per tick
 		
-		public static const THROTTLE_PRIORITY_DEFAULT : int = 10;		// Default priority level for throttling telemetry
-		public static const THROTTLE_INTERVAL_DEFAULT : int = 30000;	// Default request interval to throttle telemetry (milliseconds)
-		public static const THROTTLE_MIN_SIZE_DEFAULT : int = 5;		// Minimum number of events to reach before sending telemetry
-		public static const THROTTLE_MAX_SIZE_DEFAULT : int = 100;		// Maximum number of events reached will send telemetry
+		public static const THROTTLE_PRIORITY_DEFAULT : int = 10;			// Default priority level for throttling telemetry
+		public static const THROTTLE_INTERVAL_DEFAULT : int = 30000;		// Default request interval to throttle telemetry (milliseconds)
+		public static const THROTTLE_MIN_SIZE_DEFAULT : int = 5;			// Minimum number of events to reach before sending telemetry
+		public static const THROTTLE_MAX_SIZE_DEFAULT : int = 100;			// Maximum number of events reached will send telemetry
+		public static const THROTTLE_POLL_INTERVAL_DEFAULT : int = 10000;	// Default request interval to throttle match polling (milliseconds)
 	}
 }

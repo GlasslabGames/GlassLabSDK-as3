@@ -108,6 +108,10 @@ package GlassLabSDK {
 		private var m_dispatchCount : int;				// Local counter for dispatching telemetry
 		private var m_dispatching : Boolean;			// Indicates if the SDK is in the middle of dispatching events
 		
+		// Match polling timer
+		private var m_matchPollTimer : Timer;	// Client requests match information for a particular user at a defined interval
+		private var m_matches : Object;			// List of all match objects
+		
 		
 		private var m_callbacksAdded : Boolean = false;
 		
@@ -139,6 +143,7 @@ package GlassLabSDK {
 			m_config.eventsPeriodSecs = glsdk_const.THROTTLE_INTERVAL_DEFAULT;
 			m_config.eventsMinSize = glsdk_const.THROTTLE_MIN_SIZE_DEFAULT;
 			m_config.eventsMaxSize = glsdk_const.THROTTLE_MAX_SIZE_DEFAULT;
+			m_config.pollInterval = glsdk_const.THROTTLE_POLL_INTERVAL_DEFAULT;
 			
 			// Default JSON object variables
 			clearTelemEvents();
@@ -158,6 +163,11 @@ package GlassLabSDK {
 			m_telemetryQueueTimer = new Timer( m_config.eventsPeriodSecs );
 			m_telemetryQueueTimer.addEventListener( TimerEvent.TIMER, telemetryDispatch );
 			m_telemetryQueueTimer.start();
+			
+			// Create the poll timer
+			m_matchPollTimer = new Timer( m_config.pollInterval );
+			m_matchPollTimer.addEventListener( TimerEvent.TIMER, pollMatchesUpdate );
+			m_matches = new Object();
 			
 			// Set force flush variables to default
 			m_flushQueueOnEndSession = true;
@@ -202,14 +212,15 @@ package GlassLabSDK {
 		
 		/**
 		* Function adds a new server response object to the message queue, which is
-		* composed of the message type and JSON data. This function is called on
-		* every server callback, success and failure included.
+		* composed of the message type, success state, and JSON data. This function is
+		* called on every server callback, success and failure included.
 		*
 		* @param message The message type as denoted in glsdk_const.
+		* @param success The success state of the message.
 		* @param data The returned data in JSON format.
 		*/
-		private function pushMessageQueue( message:int, data:Object ) : void {
-			var response:glsdk_response = new glsdk_response( message, data );
+		private function pushMessageQueue( message:int, success:Boolean, data:Object ) : void {
+			var response:glsdk_response = new glsdk_response( message, success, data );
 			m_messageQueue.push( response );
 		}
 		
@@ -217,8 +228,8 @@ package GlassLabSDK {
 		* Function pops the first response message from the queue and returns it.
 		* If the queue is empty, null will be returned instead.
 		*
-		* @return A glsdk_response object is returned containing message and data
-		* information. A null indicates there are no more message available.
+		* @return A glsdk_response object is returned containing message, sucess state
+		* and data information. A null indicates there are no more message available.
 		*/
 		public function popMessageQueue() : glsdk_response {
 			if( m_messageQueue.length > 0 ) {
@@ -249,7 +260,7 @@ package GlassLabSDK {
 		/**
 		* This function is called when the dispatch timer is complete or we've reached the max number
 		* of events in the queue. Sets a flag indicating we're dispatching and dispatches the first
-		* event.
+		* event. It also makes sure to send along the total time played.
 		*
 		* @param event A reference to the TimerEvent object sent along with the listener.
 		*
@@ -259,6 +270,9 @@ package GlassLabSDK {
 			// Indicate that we are dispatching and reset the count
 			m_dispatching = true;
 			m_dispatchCount = 0;
+			
+			// Be sure to send the current total time played before beginning the dispatch.
+			sendTotalTimePlayed();
 			
 			// Dispatch the next event
 			dispatchNext();
@@ -305,13 +319,23 @@ package GlassLabSDK {
 		
 		/**
 		* Update function is called at an interval defined by UPDATE_TIMER. This function 
-		* updates the total time played and queues up a dispatch for setting it.
+		* updates the internal total time played.
 		*
 		* @param event A reference to the TimerEvent object sent along with the listener.
 		*/
 		private function update( event:TimerEvent ) : void {
 			m_totalTimePlayed += glsdk_const.UPDATE_TIMER;
-			sendTotalTimePlayed();
+		}
+		
+		
+		/**
+		* Function will periodically poll the server for match information.
+		*
+		* @param event A reference to the TimerEvent object sent along with the listener.
+		*/
+		private function pollMatchesUpdate( event:TimerEvent ) : void {
+			return;
+			pollMatches();
 		}
 		
 
@@ -326,7 +350,7 @@ package GlassLabSDK {
 		private function connect_Fail( event:Object ) : void {
 			trace( "connect_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the connect() http request. Adds a CONNECT response
@@ -340,7 +364,7 @@ package GlassLabSDK {
 		private function connect_Done( event:Object ) : void {
 			trace( "connect_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_CONNECT, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_CONNECT, true, event.target.data );
 			
 			// Once we have a successful connection, get the config info with the redirect URL
 			getConfig( event.target.data );
@@ -426,7 +450,7 @@ package GlassLabSDK {
 		private function getConfig_Fail( event:Object ) : void {
 			trace( "getConfig_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the getConfig() http request. Adds a GET_CONFIG response
@@ -459,7 +483,7 @@ package GlassLabSDK {
 				trace( "Found config info eventsMaxSize: " + m_config.eventsMaxSize );
 			}
 			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_CONFIG, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_GET_CONFIG, true, event.target.data );
 			
 			// Once we have a successful connection, get the player info and start the play session
 			getPlayerInfo();
@@ -497,7 +521,7 @@ package GlassLabSDK {
 		private function deviceUpdate_Fail( event:Object ) : void {
 			trace( "deviceUpdate_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the deviceUpdate() http request. Adds a DEVICE_UPDATE response
@@ -510,7 +534,7 @@ package GlassLabSDK {
 		private function deviceUpdate_Done( event:Object ) : void {
 			trace( "deviceUpdate_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_DEVICE_UPDATE, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_DEVICE_UPDATE, true, event.target.data );
 		}
 		/**
 		* Helper function for sending a device update notification to the server. This particular request
@@ -542,7 +566,7 @@ package GlassLabSDK {
 		private function getAuthStatus_Fail( event:Object ) : void {
 			trace( "getAuthStatus_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the getAuthStatus() http request. Adds a AUTH_STATUS response
@@ -555,7 +579,7 @@ package GlassLabSDK {
 		private function getAuthStatus_Done( event:Object ) : void {
 			trace( "getAuthStatus_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_AUTH_STATUS, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_AUTH_STATUS, true, event.target.data );
 		}
 		/**
 		* Helper function for getting the authentication status for the cookie. This particular request
@@ -587,7 +611,10 @@ package GlassLabSDK {
 			m_totalTimePlayed = 0;
 			m_updateTimer.start();
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			// Start the poll matches timer as well
+			m_matchPollTimer.start();
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the getPlayerInfo() http request. Adds a MESSAGE_GET_PLAYER_INFO
@@ -610,7 +637,10 @@ package GlassLabSDK {
 			// Set the last time and start the update timer
 			m_updateTimer.start();
 			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_PLAYER_INFO, event.target.data );
+			// Start the poll matches timer as well
+			m_matchPollTimer.start();
+			
+			pushMessageQueue( glsdk_const.MESSAGE_GET_PLAYER_INFO, true, event.target.data );
 		}
 		/**
 		* Helper function for getting the total time played for the current session. This
@@ -675,7 +705,7 @@ package GlassLabSDK {
 		private function startSession_Fail( event:Object ) : void {
 			trace( "startSession_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the startSession() http request. Adds a START_SESSION response
@@ -697,7 +727,7 @@ package GlassLabSDK {
 				trace( "Found game session Id: " + m_gameSessionId );
 			}
 			
-			pushMessageQueue( glsdk_const.MESSAGE_SESSION_START, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_SESSION_START, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -735,7 +765,7 @@ package GlassLabSDK {
 		private function endSession_Fail( event:Object ) : void {
 			trace( "endSession_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the endSession() http request. Adds an END_SESSION response
@@ -751,7 +781,7 @@ package GlassLabSDK {
 			// Reset the game session Id
 			m_gameSessionId = "";
 			
-			pushMessageQueue( glsdk_const.MESSAGE_SESSION_END, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_SESSION_END, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -791,7 +821,7 @@ package GlassLabSDK {
 		private function sendTelemEvents_Fail( event:Object ) : void {
 			trace( "sendTelemEvents_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
 		* Success callback function for the sendTelemEvents() http request. Adds an EVENTS response
@@ -804,7 +834,7 @@ package GlassLabSDK {
 		private function sendTelemEvents_Done( event:Object ) : void {
 			trace( "sendTelemEvents_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_EVENTS, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_EVENTS, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -830,7 +860,7 @@ package GlassLabSDK {
 		private function sendTotalTimePlayed_Fail( event:Object ) : void {
 			trace( "sendTotalTimePlayed_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -844,7 +874,7 @@ package GlassLabSDK {
 		private function sendTotalTimePlayed_Done( event:Object ) : void {
 			trace( "sendTotalTimePlayed_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_POST_TOTAL_TIME_PLAYED, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_POST_TOTAL_TIME_PLAYED, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -865,48 +895,9 @@ package GlassLabSDK {
 		
 		
 		/**
-		* Failure callback function for the getAchievements() http request. Adds an ERROR response
-		* to the message queue.
-		*
-		* @param event A reference to the IOErrorEvent object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Fail( event:Object ) : void {
-			trace( "sendAchievement_Fail: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Success callback function for the getAchievements() http request. Adds an MESSAGE_GET_ACHIEVEMENTS response
-		* to the message queue.
-		*
-		* @param event A reference to the Event object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Done( event:Object ) : void {
-			trace( "sendAchievement_Done: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_ACHIEVEMENTS, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Helper function for sending an achievement to the server.
-		*
-		* If this request is successful, MESSAGE_GET_ACHIEVEMENTS will be the response, otherwise
-		* MESSAGE_ERROR.
-		*/
-		public function getAchievements() : void {
-			// Store the dispatch message to be called later
-			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_ACHIEVEMENTS, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, getAchievements_Done, getAchievements_Fail ) );
-		}
-		
-		
-		/**
-		* Failure callback function for the getSaveGame() http request. Adds an ERROR response
-		* to the message queue.
+		* Failure callback function for the getSaveGame() http request. Adds an MESSAGE_GET_SAVE_GAME
+		* response to the message queue. This function will also check for "no.data" as the key
+		* attribute in the JSON data to return a specific success message indicating new user.
 		*
 		* @param event A reference to the IOErrorEvent object sent along with the listener.
 		*
@@ -915,7 +906,31 @@ package GlassLabSDK {
 		private function getSaveGame_Fail( event:Object ) : void {
 			trace( "getSaveGame_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			// Set the return data as we may modify it
+			var returnData = event.target.data;
+			var success = false;
+			
+			// If this isn't valid JSON, no save data found
+			if( returnData == "" ) {
+				returnData = { foundSaveGame: false, game: {} };
+				success = false;
+			}
+			// Get the JSON and parse it
+			else {
+				var parsedJSON : Object = glsdk_json.instance().parse( event.target.data );
+				if( parsedJSON.hasOwnProperty( "error" ) ) {
+					// We're looking for a specific key
+					if( parsedJSON.hasOwnProperty( "key" ) ) {
+						// No data means a new user/game
+						if( parsedJSON.key == "no.data" ) {
+							returnData = { foundSaveGame: false, game: {} };
+							success = true;
+						}
+					}
+				}
+			}
+			
+			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, success, returnData );
 			dispatchNext();
 		}
 		/**
@@ -937,10 +952,14 @@ package GlassLabSDK {
 				bytes.inflate();
 				
 				// Read the save game object
-				event.target.data = bytes;
+				event.target.data = { foundSaveGame: true, game: bytes };
+			}
+			else {
+				event.target.data = { foundSaveGame: true, game: parsedJSON };
 			}
 			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, event.target.data );
+			// Add this response to the queue and dispatch the next message
+			pushMessageQueue( glsdk_const.MESSAGE_GET_SAVE_GAME, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -966,7 +985,7 @@ package GlassLabSDK {
 		private function postSaveGame_Fail( event:Object ) : void {
 			trace( "postSaveGame_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -980,7 +999,7 @@ package GlassLabSDK {
 		private function postSaveGame_Done( event:Object ) : void {
 			trace( "postSaveGame_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_POST_SAVE_GAME, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_POST_SAVE_GAME, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -1009,6 +1028,47 @@ package GlassLabSDK {
 		
 		
 		/**
+		* Failure callback function for the deleteSaveGame() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function deleteSaveGame_Fail( event:Object ) : void {
+			trace( "deleteSaveGame_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the deleteSaveGame() http request. Adds an MESSAGE_DELETE_SAVE_GAME
+		* response to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function deleteSaveGame_Done( event:Object ) : void {
+			trace( "deleteSaveGame_Done: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_DELETE_SAVE_GAME, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for deleting save game data to the server.
+		*
+		* If this request is successful, MESSAGE_DELETE_SAVE_GAME will be the response, otherwise
+		* MESSAGE_ERROR.
+		*/
+		public function deleteSaveGame() : void {
+			// Store the dispatch message to be called later
+			// Removed because "DELETE" is not a supported method type in flash...
+			//httpRequest( new glsdk_dispatch( glsdk_const.API_DELETE_SAVE_GAME, "DELETE", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, deleteSaveGame_Done, deleteSaveGame_Fail ) );
+		}
+		
+		
+		/**
 		* Failure callback function for the saveAchievement() http request. Adds an ERROR response
 		* to the message queue.
 		*
@@ -1019,7 +1079,7 @@ package GlassLabSDK {
 		private function saveAchievement_Fail( event:Object ) : void {
 			trace( "saveAchievement_Fail: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -1033,7 +1093,7 @@ package GlassLabSDK {
 		private function saveAchievement_Done( event:Object ) : void {
 			trace( "saveAchievement_Done: " + event.target.data );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_POST_ACHIEVEMENT, event.target.data );
+			pushMessageQueue( glsdk_const.MESSAGE_POST_ACHIEVEMENT, true, event.target.data );
 			dispatchNext();
 		}
 		/**
@@ -1056,6 +1116,153 @@ package GlassLabSDK {
 			// Store the dispatch message to be called later
 			pushTelemetryQueue( new glsdk_dispatch( glsdk_const.API_POST_ACHIEVEMENTS, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, saveAchievement_Done, saveAchievement_Fail ) );
 		}
+		
+		
+		
+		
+		/**
+		* Failure callback function for the createMatch() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function createMatch_Fail( event:Object ) : void {
+			trace( "createMatch_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the createMatch() http request. Adds an MESSAGE_CREATE_MATCH response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function createMatch_Done( event:Object ) : void {
+			trace( "createMatch_Done: " + event.target.data );
+			
+			// Get the parsed match JSON
+			var match : Object = glsdk_json.instance().parse( event.target.data );
+			m_matches[ match.id ] = match.data;
+			
+			pushMessageQueue( glsdk_const.MESSAGE_CREATE_MATCH, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for creating a new match, requiring the opponent's user Id.
+		*
+		* If this request is successful, MESSAGE_CREATE_MATCH will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param opponentId The opponent's user Id.
+		*/
+		public function createMatch( opponentId:int ) : void {
+			// Set the post data
+			var postData : Object = new Object();
+			postData.invitedUsers = opponentId;
+			
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_CREATE_MATCH, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, createMatch_Done, createMatch_Fail ) );
+		}
+		
+		
+		/**
+		* Failure callback function for the updateMatch() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function updateMatch_Fail( event:Object ) : void {
+			trace( "updateMatch_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the updateMatch() http request. Adds an MESSAGE_UPDATE_MATCH response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function updateMatch_Done( event:Object ) : void {
+			trace( "updateMatch_Done: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_UPDATE_MATCH, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for updating a match record in the database.
+		*
+		* If this request is successful, MESSAGE_UPDATE_MATCH will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param matchId The match Id.
+		* @param data The turn data.
+		* @param nextPlayerTurn The user Id of the next player's turn.
+		*/
+		public function updateMatch( matchId:int, data:Object, nextPlayerTurn:int ) : void {
+			// Set the post data
+			var postData : Object = new Object();
+			postData.matchId = matchId;
+			postData.turnData = data;
+			postData.nextPlayer = nextPlayerTurn;
+			
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_UPDATE_MATCH, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, updateMatch_Done, updateMatch_Fail ) );
+		}
+		
+		
+		/**
+		* Failure callback function for the pollMatches() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function pollMatches_Fail( event:Object ) : void {
+			trace( "pollMatches_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the pollMatches() http request. Adds an MESSAGE_POLL_MATCHES response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function pollMatches_Done( event:Object ) : void {
+			trace( "pollMatches_Done: " + event.target.data );
+			
+			// Get the parsed match JSON
+			m_matches = glsdk_json.instance().parse( event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_POLL_MATCHES, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for polling matches from the server.
+		*
+		* If this request is successful, MESSAGE_POLL_MATCHES will be the response, otherwise
+		* MESSAGE_ERROR.
+		*/
+		public function pollMatches() : void {
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_POLL_MATCHES, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, pollMatches_Done, pollMatches_Fail ) );
+		}
+		
+		
 		
 		
 		/**
@@ -1150,7 +1357,7 @@ package GlassLabSDK {
 		private function onSecurityError( event:SecurityErrorEvent ) : void {
 			writeText( "onSecurityError: " + event.toString() );
 			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, event.toString() );
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.toString() );
 		}
 		
 		
@@ -1265,7 +1472,7 @@ package GlassLabSDK {
 			}
 			// Set the game type if it is valid
 			if( m_clientLevel != "" ) {
-				telemEvent.gameType = m_clientLevel;
+				telemEvent.gameLevel = m_clientLevel;
 			}
 			
 			// Set the event data
@@ -1324,7 +1531,7 @@ package GlassLabSDK {
 			}
 			// Set the game type if it is valid
 			if( m_clientLevel != "" ) {
-				telemEvent.gameType = m_clientLevel;
+				telemEvent.gameLevel = m_clientLevel;
 			}
 			
 			// Set the event data
@@ -1336,6 +1543,21 @@ package GlassLabSDK {
 			
 			// Clear the event values
 			clearTelemEventValues();
+		}
+		
+		
+		/**
+		* Helper function for retrieving a match object by Id.
+		*/
+		public function getMatchForId( matchId:int ) {
+			// Return an error message if the match doesn't exist
+			if( !m_matches.hasOwnProperty( matchId ) ) {
+				return { error: "match does not exist" };
+			}
+			// Return the match
+			else {
+				return m_matches[ matchId ];
+			}
 		}
 		
 		
