@@ -108,6 +108,10 @@ package GlassLabSDK {
 		private var m_dispatchCount : int;				// Local counter for dispatching telemetry
 		private var m_dispatching : Boolean;			// Indicates if the SDK is in the middle of dispatching events
 		
+		// Match polling timer
+		private var m_matchPollTimer : Timer;	// Client requests match information for a particular user at a defined interval
+		private var m_matches : Object;			// List of all match objects
+		
 		
 		private var m_callbacksAdded : Boolean = false;
 		
@@ -139,6 +143,7 @@ package GlassLabSDK {
 			m_config.eventsPeriodSecs = glsdk_const.THROTTLE_INTERVAL_DEFAULT;
 			m_config.eventsMinSize = glsdk_const.THROTTLE_MIN_SIZE_DEFAULT;
 			m_config.eventsMaxSize = glsdk_const.THROTTLE_MAX_SIZE_DEFAULT;
+			m_config.pollInterval = glsdk_const.THROTTLE_POLL_INTERVAL_DEFAULT;
 			
 			// Default JSON object variables
 			clearTelemEvents();
@@ -158,6 +163,11 @@ package GlassLabSDK {
 			m_telemetryQueueTimer = new Timer( m_config.eventsPeriodSecs );
 			m_telemetryQueueTimer.addEventListener( TimerEvent.TIMER, telemetryDispatch );
 			m_telemetryQueueTimer.start();
+			
+			// Create the poll timer
+			m_matchPollTimer = new Timer( m_config.pollInterval );
+			m_matchPollTimer.addEventListener( TimerEvent.TIMER, pollMatchesUpdate );
+			m_matches = new Object();
 			
 			// Set force flush variables to default
 			m_flushQueueOnEndSession = true;
@@ -315,6 +325,17 @@ package GlassLabSDK {
 		*/
 		private function update( event:TimerEvent ) : void {
 			m_totalTimePlayed += glsdk_const.UPDATE_TIMER;
+		}
+		
+		
+		/**
+		* Function will periodically poll the server for match information.
+		*
+		* @param event A reference to the TimerEvent object sent along with the listener.
+		*/
+		private function pollMatchesUpdate( event:TimerEvent ) : void {
+			return;
+			pollMatches();
 		}
 		
 
@@ -590,6 +611,9 @@ package GlassLabSDK {
 			m_totalTimePlayed = 0;
 			m_updateTimer.start();
 			
+			// Start the poll matches timer as well
+			m_matchPollTimer.start();
+			
 			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
 		}
 		/**
@@ -612,6 +636,9 @@ package GlassLabSDK {
 			
 			// Set the last time and start the update timer
 			m_updateTimer.start();
+			
+			// Start the poll matches timer as well
+			m_matchPollTimer.start();
 			
 			pushMessageQueue( glsdk_const.MESSAGE_GET_PLAYER_INFO, true, event.target.data );
 		}
@@ -868,46 +895,6 @@ package GlassLabSDK {
 		
 		
 		/**
-		* Failure callback function for the getAchievements() http request. Adds an ERROR response
-		* to the message queue.
-		*
-		* @param event A reference to the IOErrorEvent object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Fail( event:Object ) : void {
-			trace( "sendAchievement_Fail: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Success callback function for the getAchievements() http request. Adds an MESSAGE_GET_ACHIEVEMENTS response
-		* to the message queue.
-		*
-		* @param event A reference to the Event object sent along with the listener.
-		*
-		* @see pushMessageQueue
-		*/
-		private function getAchievements_Done( event:Object ) : void {
-			trace( "sendAchievement_Done: " + event.target.data );
-			
-			pushMessageQueue( glsdk_const.MESSAGE_GET_ACHIEVEMENTS, true, event.target.data );
-			dispatchNext();
-		}
-		/**
-		* Helper function for sending an achievement to the server.
-		*
-		* If this request is successful, MESSAGE_GET_ACHIEVEMENTS will be the response, otherwise
-		* MESSAGE_ERROR.
-		*/
-		public function getAchievements() : void {
-			// Store the dispatch message to be called later
-			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_ACHIEVEMENTS, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, getAchievements_Done, getAchievements_Fail ) );
-		}
-		
-		
-		/**
 		* Failure callback function for the getSaveGame() http request. Adds an MESSAGE_GET_SAVE_GAME
 		* response to the message queue. This function will also check for "no.data" as the key
 		* attribute in the JSON data to return a specific success message indicating new user.
@@ -1129,6 +1116,153 @@ package GlassLabSDK {
 			// Store the dispatch message to be called later
 			pushTelemetryQueue( new glsdk_dispatch( glsdk_const.API_POST_ACHIEVEMENTS, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, saveAchievement_Done, saveAchievement_Fail ) );
 		}
+		
+		
+		
+		
+		/**
+		* Failure callback function for the createMatch() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function createMatch_Fail( event:Object ) : void {
+			trace( "createMatch_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the createMatch() http request. Adds an MESSAGE_CREATE_MATCH response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function createMatch_Done( event:Object ) : void {
+			trace( "createMatch_Done: " + event.target.data );
+			
+			// Get the parsed match JSON
+			var match : Object = glsdk_json.instance().parse( event.target.data );
+			m_matches[ match.id ] = match.data;
+			
+			pushMessageQueue( glsdk_const.MESSAGE_CREATE_MATCH, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for creating a new match, requiring the opponent's user Id.
+		*
+		* If this request is successful, MESSAGE_CREATE_MATCH will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param opponentId The opponent's user Id.
+		*/
+		public function createMatch( opponentId:int ) : void {
+			// Set the post data
+			var postData : Object = new Object();
+			postData.invitedUsers = opponentId;
+			
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_CREATE_MATCH, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, createMatch_Done, createMatch_Fail ) );
+		}
+		
+		
+		/**
+		* Failure callback function for the updateMatch() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function updateMatch_Fail( event:Object ) : void {
+			trace( "updateMatch_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the updateMatch() http request. Adds an MESSAGE_UPDATE_MATCH response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function updateMatch_Done( event:Object ) : void {
+			trace( "updateMatch_Done: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_UPDATE_MATCH, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for updating a match record in the database.
+		*
+		* If this request is successful, MESSAGE_UPDATE_MATCH will be the response, otherwise
+		* MESSAGE_ERROR.
+		*
+		* @param matchId The match Id.
+		* @param data The turn data.
+		* @param nextPlayerTurn The user Id of the next player's turn.
+		*/
+		public function updateMatch( matchId:int, data:Object, nextPlayerTurn:int ) : void {
+			// Set the post data
+			var postData : Object = new Object();
+			postData.matchId = matchId;
+			postData.turnData = data;
+			postData.nextPlayer = nextPlayerTurn;
+			
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_POST_UPDATE_MATCH, "POST", postData, glsdk_const.CONTENT_TYPE_APPLICATION_JSON, updateMatch_Done, updateMatch_Fail ) );
+		}
+		
+		
+		/**
+		* Failure callback function for the pollMatches() http request. Adds an ERROR response
+		* to the message queue.
+		*
+		* @param event A reference to the IOErrorEvent object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function pollMatches_Fail( event:Object ) : void {
+			trace( "pollMatches_Fail: " + event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_ERROR, false, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Success callback function for the pollMatches() http request. Adds an MESSAGE_POLL_MATCHES response
+		* to the message queue.
+		*
+		* @param event A reference to the Event object sent along with the listener.
+		*
+		* @see pushMessageQueue
+		*/
+		private function pollMatches_Done( event:Object ) : void {
+			trace( "pollMatches_Done: " + event.target.data );
+			
+			// Get the parsed match JSON
+			m_matches = glsdk_json.instance().parse( event.target.data );
+			
+			pushMessageQueue( glsdk_const.MESSAGE_POLL_MATCHES, true, event.target.data );
+			dispatchNext();
+		}
+		/**
+		* Helper function for polling matches from the server.
+		*
+		* If this request is successful, MESSAGE_POLL_MATCHES will be the response, otherwise
+		* MESSAGE_ERROR.
+		*/
+		public function pollMatches() : void {
+			// Store the dispatch message to be called later
+			httpRequest( new glsdk_dispatch( glsdk_const.API_GET_POLL_MATCHES, "GET", {}, glsdk_const.CONTENT_TYPE_APPLICATION_X_WWW_FORM_URLENCODED, pollMatches_Done, pollMatches_Fail ) );
+		}
+		
+		
 		
 		
 		/**
@@ -1409,6 +1543,21 @@ package GlassLabSDK {
 			
 			// Clear the event values
 			clearTelemEventValues();
+		}
+		
+		
+		/**
+		* Helper function for retrieving a match object by Id.
+		*/
+		public function getMatchForId( matchId:int ) {
+			// Return an error message if the match doesn't exist
+			if( !m_matches.hasOwnProperty( matchId ) ) {
+				return { error: "match does not exist" };
+			}
+			// Return the match
+			else {
+				return m_matches[ matchId ];
+			}
 		}
 		
 		

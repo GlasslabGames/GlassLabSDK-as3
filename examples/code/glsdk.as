@@ -120,13 +120,6 @@ package {
 						writeText( "MESSAGE_POST_TOTAL_TIME_PLAYED " + response.m_data );
 						break;
 					
-					case glsdk_const.MESSAGE_GET_ACHIEVEMENTS:
-						trace( "MESSAGE_GET_ACHIEVEMENTS " + response.m_data );
-					
-						// DEBUG - append to canvas stream
-						writeText( "MESSAGE_GET_ACHIEVEMENTS " + response.m_data );
-						break;
-					
 					case glsdk_const.MESSAGE_POST_ACHIEVEMENT:
 						trace( "MESSAGE_POST_ACHIEVEMENT " + response.m_data );
 					
@@ -153,6 +146,27 @@ package {
 					
 						// DEBUG - append to canvas stream
 						writeText( "MESSAGE_DELETE_SAVE_GAME " + response.m_data );
+						break;
+					
+					case glsdk_const.MESSAGE_CREATE_MATCH:
+						trace( "MESSAGE_CREATE_MATCH " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_CREATE_MATCH " + response.m_data );
+						break;
+					
+					case glsdk_const.MESSAGE_UPDATE_MATCH:
+						trace( "MESSAGE_UPDATE_MATCH " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_UPDATE_MATCH " + response.m_data );
+						break;
+					
+					case glsdk_const.MESSAGE_POLL_MATCHES:
+						trace( "MESSAGE_POLL_MATCHES " + response.m_data );
+					
+						// DEBUG - append to canvas stream
+						writeText( "MESSAGE_POLL_MATCHES " + response.m_data );
 						break;
 					
 					case glsdk_const.MESSAGE_ERROR:
@@ -222,10 +236,6 @@ package {
 				writeText( "Attempting to get auth status..." );
 				getAuthStatus();
 			}
-			else if( event.charCode == 113 ) {	// Q
-				writeText( "Attempting to get all achievements..." );
-				getAchievements();
-			}
 			else if( event.charCode == 119 ) {	// W
 				writeText( "Attempting to send an achievement..." );
 				saveAchievement( "Core Cadet", "CCSS.ELA-Literacy.WHST.6-8.1", "b" );
@@ -247,6 +257,14 @@ package {
 				// Post the save game data
 				postSaveGameBinary( bytes );
 			}
+			/*else if( event.charCode == 109 ) {	// M
+				writeText( "Attempting to create a new match..." );
+				createMatch();
+			}
+			else if( event.charCode == 117 ) {	// U
+				writeText( "Attempting to update a match..." );
+				updateMatch();
+			}*/
 		}
 		
 		/**
